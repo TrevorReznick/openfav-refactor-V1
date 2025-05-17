@@ -27,7 +27,6 @@ let requestHistory: {
   response: any
 }[] = []
 
-// Handle form submission
 const handleSubmit = async (event: SubmitEvent) => {
   event.preventDefault()
   const form = event.target as HTMLFormElement
@@ -58,6 +57,8 @@ const handleSubmit = async (event: SubmitEvent) => {
         },
         body: JSON.stringify(body),
       })
+
+
     }
 
     const endTime = performance.now()
@@ -99,7 +100,15 @@ const updateRequestHistory = () => {
 
   historyContainer.innerHTML = requestHistory
     .map(
-      (req) => `
+      (req: {
+        timestamp: string
+        method: string
+        endpoint: string
+        status: number
+        responseTime: string
+        request: string
+        response: any
+      }) => `
     <div class="history-item">
       <div class="history-header">
         <span class="method ${req.method.toLowerCase()}">${req.method}</span>
@@ -126,8 +135,8 @@ const updateRequestHistory = () => {
   // Add event handlers to show/hide details
   document.querySelectorAll('.history-header').forEach((header) => {
     header.addEventListener('click', () => {
-      const details = header.nextElementSibling as HTMLElement
-      if (details) {
+      const details = header.nextElementSibling
+      if (details instanceof HTMLElement) {
         details.style.display =
           details.style.display === 'none' ? 'block' : 'none'
       }
@@ -139,7 +148,7 @@ const updateRequestHistory = () => {
 const runExample = (
   endpoint: string,
   method: string = 'GET',
-  body: any = null,
+  body: Record<string, any> | null = null,
 ) => {
   const form = document.querySelector('form')
   if (!form) return
@@ -310,6 +319,8 @@ const apiExamples = [
         --color-success: #10b981;
         --color-error: #ef4444;
         --color-warning: #f59e0b;
+        --color-console: #1e293b;
+        --color-response: #0f172a;
         --color-info: #3b82f6;
         --bg-light: #f9fafb;
         --border-color: #e5e7eb;
@@ -534,6 +545,42 @@ const apiExamples = [
       .tab-content.active {
         display: block;
       }
+
+      .console,
+      .response {
+        background-color: var(--color-console);
+        color: #e2e8f0;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        font-family: monospace;
+        white-space: pre-wrap;
+        max-height: 300px;
+        overflow-y: auto;
+      }
+
+      .response {
+        background-color: var(--color-response);
+      }
+      
+      .status-bar {
+        padding: 8px 16px;
+        margin: 16px 0;
+        border-radius: 4px;
+        font-weight: 500;
+        display: none;
+      }
+
+      .status-bar.success {
+        background-color: #e6ffe6;
+        color: #006600;
+        border: 1px solid #00cc00;
+      }
+
+      .status-bar.error {
+        background-color: #ffe6e6;
+        color: #cc0000;
+        border: 1px solid #ff0000;
+      }
     </style>
   </head>
   <body>
@@ -586,6 +633,7 @@ const apiExamples = [
                 required
               />
             </div>
+
             <div class="form-group">
               <label for="body">Request Body (JSON)</label>
               <textarea
@@ -594,24 +642,55 @@ const apiExamples = [
                 rows="6"
                 placeholder='{"key": "value"}'></textarea>
             </div>
+
             <button type="submit" disabled={loading}>Send Request</button>
           </form>
         </div>
+
         <div class="tab-content" id="history">
           <div id="request-history"></div>
         </div>
+
         {error && <div class="error">{error}</div>}
-        {
-          responseData && (
-            <div class="form-group">
-              <label>Response</label>
-              <pre>{responseData}</pre>
-            </div>
-          )
-        }
+        {responseData && (
+          <div class="form-group">
+            <label>Response</label>
+            <pre>{responseData}</pre>
+          </div>
+        )}
+      </div>
+
+      <div id="status-bar" class="status-bar"></div>
+
+      <div class="card mt-4">
+        <h2>Console Output</h2>
+        <pre id="console-output" class="console"></pre>
+      </div>
+
+      <div class="card mt-4">
+        <h2>API Response</h2>
+        <pre id="api-response" class="response"></pre>
       </div>
     </div>
     <script>
+      // Console logging setup
+      function consoleLog(...args) {
+        const consoleOutput = document.getElementById('console-output')
+        if (consoleOutput) {
+          consoleOutput.textContent += args.map(arg => 
+            typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
+          ).join(' ') + '\n'
+          consoleOutput.scrollTop = consoleOutput.scrollHeight
+        }
+      }
+
+      // Override console.log
+      const originalConsoleLog = console.log
+      console.log = (...args) => {
+        originalConsoleLog.apply(console, args)
+        consoleLog(...args)
+      }
+
       // Copy of apiExamples from the Astro script
       const apiExamples = [
         {
@@ -748,16 +827,17 @@ const apiExamples = [
         // Add event handlers to show/hide details
         document.querySelectorAll('.history-header').forEach((header) => {
           header.addEventListener('click', () => {
-            header.nextElementSibling.style.display =
-              header.nextElementSibling.style.display === 'none'
-                ? 'block'
-                : 'none'
+            const details = header.nextElementSibling
+            if (details instanceof HTMLElement) {
+              details.style.display =
+                details.style.display === 'none' ? 'block' : 'none'
+            }
           })
         })
       }
 
       // Function to run predefined examples
-      function runExample(endpoint, method = 'GET', body = null) {
+      function runExample(endpoint: string, method: string = 'GET', body: any = null) {
         const form = document.querySelector('form')
         if (!form) return
 
@@ -775,11 +855,17 @@ const apiExamples = [
       }
 
       // Handle form submission
-      async function handleSubmit(event) {
+      async function handleSubmit(event: SubmitEvent) {
         event.preventDefault()
         const form = event.target
         const endpoint = form.endpoint.value
         const method = form.method.value
+
+        // Clear previous output
+        const consoleOutput = document.getElementById('console-output')
+        const apiResponse = document.getElementById('api-response')
+        if (consoleOutput) consoleOutput.textContent = ''
+        if (apiResponse) apiResponse.textContent = ''
         const requestBody = form.body?.value || '{}'
 
         let loading = true
@@ -787,6 +873,10 @@ const apiExamples = [
         let responseData = ''
 
         try {
+          console.log(`Making ${method} request to: ${endpoint}`)
+          if (method !== 'GET') {
+            console.log('Request body:', JSON.parse(requestBody))
+          }
           const url = new URL(`/api/v1/${endpoint}`, window.location.origin)
 
           const startTime = performance.now()
@@ -795,13 +885,14 @@ const apiExamples = [
           if (method === 'GET') {
             response = await fetch(url.toString())
           } else {
-            const body = requestBody ? JSON.parse(requestBody) : {}
+            const bodyInput = form.querySelector('#body') as HTMLTextAreaElement
+            const requestBody = bodyInput?.value ? JSON.parse(bodyInput.value) : {}
             response = await fetch(url.toString(), {
               method,
               headers: {
                 'Content-Type': 'application/json',
               },
-              body: JSON.stringify(body),
+              body: JSON.stringify(requestBody),
             })
           }
 
@@ -809,7 +900,15 @@ const apiExamples = [
           const responseTime = Math.round(endTime - startTime)
 
           const data = await response.json()
-          responseData = JSON.stringify(data, null, 2)
+          const responseData = JSON.stringify(data, null, 2)
+          if (apiResponse) apiResponse.textContent = responseData
+          console.log('Response:', data)
+
+          // Aggiorna la barra di stato
+          const statusBar = document.getElementById('status-bar')
+          statusBar.textContent = `${response.status} ${response.statusText}`
+          statusBar.className = `status-bar ${response.ok ? 'success' : 'error'}`
+          statusBar.style.display = 'block'
 
           // Add the call to history
           requestHistory.unshift({
@@ -837,7 +936,13 @@ const apiExamples = [
           }
         } catch (err) {
           error = err instanceof Error ? err.message : 'An error occurred'
-          console.error('API Error:', err)
+          console.error('Error:', error)
+          
+          // Mostra errore nella barra di stato
+          const statusBar = document.getElementById('status-bar')
+          statusBar.textContent = `Error: ${err.message}`
+          statusBar.className = 'status-bar error'
+          statusBar.style.display = 'block'
           // Show error in the UI
           const errorDiv = document.querySelector('.error')
           if (errorDiv) {
