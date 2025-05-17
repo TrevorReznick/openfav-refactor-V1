@@ -1,18 +1,16 @@
 import type { APIRoute } from 'astro';
 import { supabase } from '@/providers/supabase';
-import type { 
-  UserList, 
-  ListItem, 
-  CreateListData, 
-  UpdateListData, 
-  AddItemData 
-} from '@/types';
+import type {
+  CreateListData,
+  UpdateListData,
+  AddItemData
+} from '@/types'
 
 // Helper per gestire le risposte API
-const jsonResponse = (data: any, status = 200) => 
-  new Response(JSON.stringify(data), { 
-    status, 
-    headers: { 'Content-Type': 'application/json' } 
+const jsonResponse = (data: any, status = 200) =>
+  new Response(JSON.stringify(data), {
+    status,
+    headers: { 'Content-Type': 'application/json' }
   });
 
 // Ottieni tutte le liste dell'utente
@@ -24,7 +22,7 @@ export const GET: APIRoute = async ({ request }) => {
       .order('modified_at', { ascending: false });
 
     if (error) throw error;
-    
+
     return jsonResponse({ data });
   } catch (error: any) {
     console.error('Error fetching lists:', error);
@@ -37,7 +35,7 @@ export const POST: APIRoute = async ({ request }) => {
   try {
     const body: CreateListData = await request.json();
     const user = (await supabase.auth.getUser()).data.user;
-    
+
     if (!user) {
       return jsonResponse({ error: 'Unauthorized' }, 401);
     }
@@ -56,7 +54,7 @@ export const POST: APIRoute = async ({ request }) => {
       .single();
 
     if (error) throw error;
-    
+
     return jsonResponse({ data }, 201);
   } catch (error: any) {
     console.error('Error creating list:', error);
@@ -70,23 +68,23 @@ export const PUT: APIRoute = async ({ request, params }) => {
     const updates: UpdateListData = await request.json();
     const url = new URL(request.url);
     const id = url.searchParams.get('id');
-    
+
     if (!id) {
       return jsonResponse({ error: 'List ID is required' }, 400);
     }
 
     const { data, error } = await supabase
       .from('lists_users')
-      .update({ 
-        ...updates, 
-        modified_at: new Date().toISOString() 
+      .update({
+        ...updates,
+        modified_at: new Date().toISOString()
       })
       .eq('id', id)
       .select()
       .single();
 
     if (error) throw error;
-    
+
     return jsonResponse({ data });
   } catch (error: any) {
     console.error('Error updating list:', error);
@@ -99,7 +97,7 @@ export const DELETE: APIRoute = async ({ request, params }) => {
   try {
     const url = new URL(request.url);
     const id = url.searchParams.get('id');
-    
+
     if (!id) {
       return jsonResponse({ error: 'List ID is required' }, 400);
     }
@@ -110,7 +108,7 @@ export const DELETE: APIRoute = async ({ request, params }) => {
       .eq('id', id);
 
     if (error) throw error;
-    
+
     return jsonResponse({ success: true });
   } catch (error: any) {
     console.error('Error deleting list:', error);
@@ -122,7 +120,7 @@ export const DELETE: APIRoute = async ({ request, params }) => {
 export const addItemToList: APIRoute = async ({ request }) => {
   try {
     const itemData: AddItemData = await request.json();
-    
+
     const { data, error } = await supabase
       .from('lists_items')
       .insert([itemData])
@@ -130,7 +128,7 @@ export const addItemToList: APIRoute = async ({ request }) => {
       .single();
 
     if (error) throw error;
-    
+
     return jsonResponse({ data }, 201);
   } catch (error: any) {
     console.error('Error adding item to list:', error);
@@ -141,7 +139,7 @@ export const addItemToList: APIRoute = async ({ request }) => {
 export const removeItemFromList: APIRoute = async ({ request }) => {
   try {
     const { itemId } = await request.json();
-    
+
     if (!itemId) {
       return jsonResponse({ error: 'Item ID is required' }, 400);
     }
@@ -152,7 +150,7 @@ export const removeItemFromList: APIRoute = async ({ request }) => {
       .eq('id', itemId);
 
     if (error) throw error;
-    
+
     return jsonResponse({ success: true });
   } catch (error: any) {
     console.error('Error removing item from list:', error);
@@ -164,7 +162,7 @@ export const getListItems: APIRoute = async ({ request }) => {
   try {
     const url = new URL(request.url);
     const listId = url.searchParams.get('listId');
-    
+
     if (!listId) {
       return jsonResponse({ error: 'List ID is required' }, 400);
     }
@@ -175,7 +173,7 @@ export const getListItems: APIRoute = async ({ request }) => {
       .eq('id_list', listId);
 
     if (error) throw error;
-    
+
     return jsonResponse({ data });
   } catch (error: any) {
     console.error('Error fetching list items:', error);
