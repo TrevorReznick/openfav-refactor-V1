@@ -1,0 +1,399 @@
+---
+// src/pages/api-test.astro
+import { supabase } from '../providers/supabase';
+
+let responseData = '';
+let loading = false;
+let error = '';
+let requestHistory = [];
+
+// Handle form submission
+const handleSubmit = async (event: SubmitEvent) => {
+  event.preventDefault();
+  const form = event.target as HTMLFormElement;
+  const endpoint = form.endpoint.value;
+  const method = form.method.value;
+  const requestBody = form.body?.value || '{}';
+  
+  try {
+    loading = true;
+    error = '';
+    responseData = '';
+    
+    let response;
+    const url = new URL(`/api/v1/${endpoint}`, window.location.origin);
+    
+    const startTime = performance.now();
+    
+    if (method === 'GET') {
+      response = await fetch(url.toString());
+    } else {
+      const body = requestBody ? JSON.parse(requestBody) : {};
+      response = await fetch(url.toString(), {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      });
+    }
+    
+    const endTime = performance.now();
+    const responseTime = Math.round(endTime - startTime);
+    
+    const data = await response.json();
+    responseData = JSON.stringify(data, null, 2);
+    
+    // Aggiungi la chiamata alla cronologia
+    requestHistory.unshift({
+      timestamp: new Date().toLocaleTimeString(),
+      method,
+      endpoint,
+      status: response.status,
+      responseTime: `${responseTime}ms`,
+      request: requestBody,
+      response: data
+    });
+    
+    // Mantieni solo le ultime 10 richieste
+    if (requestHistory.length > 10) {
+      requestHistory.pop();
+    }
+    
+    // Aggiorna la visualizzazione
+    updateRequestHistory();
+    
+  } catch (err) {
+    error = err instanceof Error ? err.message : 'An error occurred';
+    console.error('API Error:', err);
+  } finally {
+    loading = false;
+  }
+};
+
+// Funzione per aggiornare la cronologia delle richieste
+const updateRequestHistory = () => {
+  const historyContainer = document.getElementById('request-history');
+  if (!historyContainer) return;
+  
+  historyContainer.innerHTML = requestHistory.map((req, index) => `
+    <div class="history-item">
+      <div class="history-header">
+        <span class="method ${req.method.toLowerCase()}">${req.method}</span>
+        <span class="endpoint">${req.endpoint}</span>
+        <span class="status">${req.status}</span>
+        <span class="time">${req.responseTime}</span>
+        <span class="timestamp">${req.timestamp}</span>
+      </div>
+      <div class="history-details">
+        <div class="request-details">
+          <h4>Request:</h4>
+          <pre>${JSON.stringify(JSON.parse(req.request), null, 2)}</pre>
+        </div>
+        <div class="response-details">
+          <h4>Response:</h4>
+          <pre>${JSON.stringify(req.response, null, 2)}</pre>
+        </div>
+      </div>
+    </div>
+  `).join('');
+  
+  // Aggiungi gestori di eventi per mostrare/nascondere i dettagli
+  document.querySelectorAll('.history-header').forEach(header => {
+    header.addEventListener('click', () => {
+      header.nextElementSibling.style.display = 
+        header.nextElementSibling.style.display === 'none' ? 'block' : 'none';
+    });
+  });
+};
+
+// Funzione per eseguire esempi predefiniti
+const runExample = async (endpoint, method = 'GET', body = null) => {
+  const form = document.querySelector('form');
+  if (!form) return;
+  
+  form.endpoint.value = endpoint;
+  form.method.value = method;
+  if (body) {
+    form.body.value = JSON.stringify(body, null, 2);
+  } else {
+    form.body.value = '';
+  }
+  
+  // Simula l'invio del form
+  const event = new Event('submit');
+  form.dispatchEvent(event);
+};
+---
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width">
+  <title>API Test Page</title>
+  <style>
+    :root {
+      --color-success: #10b981;
+      --color-error: #ef4444;
+      --color-warning: #f59e0b;
+      --color-info: #3b82f6;
+      --bg-light: #f9fafb;
+      --border-color: #e5e7eb;
+    }
+    
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      line-height: 1.6;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+      color: #333;
+      background-color: #f8f9fa;
+    }
+    .container {
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+    .card {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      border: 1px solid var(--border-color);
+    }
+    .form-group {
+      margin-bottom: 1rem;
+    }
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+    }
+    input, select, textarea, button {
+      width: 100%;
+      padding: 0.5rem;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-family: inherit;
+    }
+    button {
+      background: #4f46e5;
+      color: white;
+      border: none;
+      padding: 0.75rem 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button:hover {
+      background: #4338ca;
+    }
+    button:disabled {
+      background: #9ca3af;
+      cursor: not-allowed;
+    }
+    pre {
+      background: var(--bg-light);
+      padding: 1rem;
+      border-radius: 4px;
+      overflow-x: auto;
+      max-height: 400px;
+      font-size: 0.9em;
+      border: 1px solid var(--border-color);
+    }
+    .error {
+      color: var(--color-error);
+      background: #fef2f2;
+      padding: 1rem;
+      border-radius: 4px;
+      margin: 1rem 0;
+      border-left: 4px solid var(--color-error);
+    }
+    
+    /* Stili per la cronologia */
+    .history-item {
+      margin-bottom: 1rem;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    
+    .history-header {
+      display: flex;
+      align-items: center;
+      padding: 0.75rem 1rem;
+      background-color: white;
+      cursor: pointer;
+      border-bottom: 1px solid var(--border-color);
+    }
+    
+    .history-header:hover {
+      background-color: var(--bg-light);
+    }
+    
+    .method {
+      font-weight: 600;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.8em;
+      margin-right: 0.75rem;
+      color: white;
+      min-width: 60px;
+      text-align: center;
+    }
+    
+    .get { background-color: var(--color-info); }
+    .post { background-color: var(--color-success); }
+    .put { background-color: var(--color-warning); }
+    .delete { background-color: var(--color-error); }
+    
+    .endpoint {
+      flex-grow: 1;
+      font-family: monospace;
+      font-weight: 500;
+    }
+    
+    .status {
+      font-weight: 600;
+      margin: 0 1rem;
+      min-width: 40px;
+      text-align: center;
+    }
+    
+    .time {
+      color: #6b7280;
+      font-size: 0.9em;
+      min-width: 80px;
+      text-align: right;
+    }
+    
+    .timestamp {
+      color: #9ca3af;
+      font-size: 0.85em;
+      margin-left: 1rem;
+      min-width: 80px;
+      text-align: right;
+    }
+    
+    .history-details {
+      display: none;
+      background-color: white;
+      padding: 1rem;
+      border-top: 1px solid var(--border-color);
+    }
+    
+    .history-details h4 {
+      margin-top: 0;
+      margin-bottom: 0.5rem;
+      color: #4b5563;
+    }
+    
+    .request-details,
+    .response-details {
+      margin-bottom: 1rem;
+    }
+    
+    .example-buttons {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+    
+    .example-btn {
+      background: #e0e7ff;
+      color: #4f46e5;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.9em;
+      transition: all 0.2s;
+    }
+    
+    .example-btn:hover {
+      background: #c7d2fe;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>API Test Page</h1>
+    
+    <div class="card">
+      <h2>Test API Endpoints</h2>
+      
+      <div class="example-buttons">
+        <button class="example-btn" on:click={() => runExample('lists/lists', 'GET')}>
+          Get All Lists
+        </button>
+        <button class="example-btn" on:click={() => runExample('lists/items', 'POST', { list_id: 'example' })}>
+          Get List Items
+        </button>
+        <button class="example-btn" on:click={() => runExample('lists/lists', 'POST', { name: 'New List', description: 'Test list' })}>
+          Create New List
+        </button>
+      </div>
+      <form on:submit={handleSubmit}>
+        <div class="form-group">
+          <label for="method">HTTP Method</label>
+          <select id="method" name="method" required>
+            <option value="GET">GET</option>
+            <option value="POST">POST</option>
+            <option value="PUT">PUT</option>
+            <option value="DELETE">DELETE</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label for="endpoint">Endpoint (e.g., lists/lists, lists/items)</label>
+          <input 
+            type="text" 
+            id="endpoint" 
+            name="endpoint" 
+            placeholder="lists/lists"
+            required
+          />
+        </div>
+        
+        <div class="form-group">
+          <label for="body">Request Body (JSON)</label>
+          <textarea 
+            id="body" 
+            name="body" 
+            rows="5"
+            placeholder='{"key": "value"}'
+          ></textarea>
+        </div>
+        
+        <button type="submit" disabled={loading}>
+          {loading ? 'Sending...' : 'Send Request'}
+        </button>
+      </form>
+      
+      {error && (
+        <div class="error">
+          <strong>Error:</strong> {error}
+        </div>
+      )}
+      
+      {responseData && (
+        <div class="response">
+          <h3>Response:</h3>
+          <pre>{responseData}</pre>
+        </div>
+      )}
+      
+      <div class="request-history">
+        <h3>Request History</h3>
+        <div id="request-history">
+          <!-- Le richieste verranno mostrate qui -->
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

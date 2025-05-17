@@ -1,0 +1,191 @@
+---
+// Esempio di utilizzo dell'API
+// Questa pagina mostra come effettuare chiamate all'API RESTful che abbiamo creato
+---
+
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Esempio di utilizzo API</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      line-height: 1.6;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      color: #333;
+    }
+    .container {
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+    .card {
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    pre {
+      background: #f5f5f5;
+      padding: 15px;
+      border-radius: 4px;
+      overflow-x: auto;
+    }
+    button {
+      background: #0070f3;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      margin: 5px 0;
+    }
+    button:hover {
+      background: #0051a8;
+    }
+    .response {
+      margin-top: 15px;
+      padding: 15px;
+      border-radius: 4px;
+    }
+    .success {
+      background-color: #e6f7e6;
+      border-left: 4px solid #4CAF50;
+    }
+    .error {
+      background-color: #ffebee;
+      border-left: 4px solid #f44336;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Esempio di utilizzo API</h1>
+    
+    <div class="card">
+      <h2>1. Ottieni un elemento (GET)</h2>
+      <p>Recupera un elemento specifico dal database.</p>
+      <pre><code>GET /api/v1/data/123</code></pre>
+      <button onclick="testGet()">Prova GET</button>
+      <div id="getResponse" class="response"></div>
+    </div>
+
+    <div class="card">
+      <h2>2. Crea un nuovo elemento (POST)</h2>
+      <p>Crea un nuovo elemento nel database.</p>
+      <pre><code>POST /api/v1/data
+Content-Type: application/json
+
+{
+  "name": "Nuovo elemento",
+  "description": "Descrizione dell'elemento"
+}</code></pre>
+      <button onclick="testPost()">Prova POST</button>
+      <div id="postResponse" class="response"></div>
+    </div>
+
+    <div class="card">
+      <h2>3. Aggiorna un elemento (PUT)</h2>
+      <p>Aggiorna un elemento esistente.</p>
+      <pre><code>PUT /api/v1/data/123
+Content-Type: application/json
+
+{
+  "name": "Elemento aggiornato",
+  "description": "Descrizione aggiornata"
+}</code></pre>
+      <button onclick="testPut()">Prova PUT</button>
+      <div id="putResponse" class="response"></div>
+    </div>
+
+    <div class="card">
+      <h2>4. Elimina un elemento (DELETE)</h2>
+      <p>Elimina un elemento esistente.</p>
+      <pre><code>DELETE /api/v1/data/123</code></pre>
+      <button onclick="testDelete()">Prova DELETE</button>
+      <div id="deleteResponse" class="response"></div>
+    </div>
+  </div>
+
+  <script>
+    // Funzione per mostrare la risposta
+    function showResponse(elementId, data, isError = false) {
+      const responseDiv = document.getElementById(elementId);
+      responseDiv.textContent = JSON.stringify(data, null, 2);
+      responseDiv.className = 'response ' + (isError ? 'error' : 'success');
+    }
+
+    // Test GET
+    async function testGet() {
+      try {
+        const response = await fetch('/api/v1/data/123');
+        const data = await response.json();
+        showResponse('getResponse', data, !response.ok);
+      } catch (error) {
+        showResponse('getResponse', { error: error.message }, true);
+      }
+    }
+
+    // Test POST
+    async function testPost() {
+      try {
+        const response = await fetch('/api/v1/data', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            name: 'Nuovo elemento',
+            description: 'Descrizione del nuovo elemento',
+            createdAt: new Date().toISOString()
+          })
+        });
+        const data = await response.json();
+        showResponse('postResponse', data, !response.ok);
+      } catch (error) {
+        showResponse('postResponse', { error: error.message }, true);
+      }
+    }
+
+    // Test PUT
+    async function testPut() {
+      try {
+        const response = await fetch('/api/v1/data/123', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            name: 'Elemento aggiornato',
+            description: 'Descrizione aggiornata',
+            updatedAt: new Date().toISOString()
+          })
+        });
+        const data = await response.json();
+        showResponse('putResponse', data, !response.ok);
+      } catch (error) {
+        showResponse('putResponse', { error: error.message }, true);
+      }
+    }
+
+    // Test DELETE
+    async function testDelete() {
+      try {
+        const response = await fetch('/api/v1/data/123', {
+          method: 'DELETE'
+        });
+        const data = await response.json();
+        showResponse('deleteResponse', data, !response.ok);
+      } catch (error) {
+        showResponse('deleteResponse', { error: error.message }, true);
+      }
+    }
+  </script>
+</body>
+</html>

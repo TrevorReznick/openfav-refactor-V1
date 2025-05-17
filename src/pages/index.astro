@@ -1,0 +1,29 @@
+---
+// Your TypeScript code here
+const title = 'Welcome to Astro';
+---
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{title}</title>
+  </head>
+  <body>
+    <h1>{title}</h1>
+    <p>Your content here</p>
+  </body>
+</html>
+
+<style>
+  :root {
+    font-family: system-ui, -apple-system, sans-serif;
+  }
+  body {
+    max-width: 65ch;
+    margin: 0 auto;
+    padding: 2rem;
+  }
+</style>
