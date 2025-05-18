@@ -5,12 +5,12 @@ import type { Link, Collection, UserList } from '@/types';
 
 interface ApiComponentProps {
   type: 'links' | 'collections' | 'lists';
-  action: 'get' | 'create' | 'update' | 'delete';
+  action: 'getAll' | 'getOne' | 'create' | 'update' | 'delete';
   id?: string | number;
   data?: any;
 }
 
-const ApiComponent: React.FC<ApiComponentProps> = ({ type = 'links', action = 'get', id, data }) => {
+const ApiComponent: React.FC<ApiComponentProps> = ({ type = 'links', action = 'getAll', id, data }) => {
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -23,23 +23,25 @@ const ApiComponent: React.FC<ApiComponentProps> = ({ type = 'links', action = 'g
       let response: any;
 
       switch (action) {
-        case 'get':
-          if (id) {
-            response = await (type === 'links' 
-              ? links.getOne(id as string) 
-              : type === 'collections' 
-                ? collections.getOne(id as string) 
-                : lists.getOne(id as number));
-          } else {
-            response = await (type === 'links' 
-              ? links.getAll() 
-              : type === 'collections' 
-                ? collections.getAll() 
-                : lists.getAll());
-          }
+        case 'getAll':
+          response = await (type === 'links' 
+            ? links.getAll() 
+            : type === 'collections' 
+              ? collections.getAll() 
+              : lists.getAll());
+          break;
+
+        case 'getOne':
+          if (!id) throw new Error('ID is required for getOne');
+          response = await (type === 'links' 
+            ? links.getOne(id as string) 
+            : type === 'collections' 
+              ? collections.getOne(id as string) 
+              : lists.getOne(id as number));
           break;
 
         case 'create':
+          if (!data) throw new Error('Data is required for create');
           response = await (type === 'links' 
             ? links.create(data as any) 
             : type === 'collections' 
@@ -48,7 +50,7 @@ const ApiComponent: React.FC<ApiComponentProps> = ({ type = 'links', action = 'g
           break;
 
         case 'update':
-          if (!id) throw new Error('ID is required for update');
+          if (!id || !data) throw new Error('ID and data are required for update');
           response = await (type === 'links' 
             ? links.update(id as string, data as any) 
             : type === 'collections' 
@@ -81,7 +83,7 @@ const ApiComponent: React.FC<ApiComponentProps> = ({ type = 'links', action = 'g
   };
 
   useEffect(() => {
-    if (action === 'get') {
+    if (action === 'getAll') {
       handleApiCall();
     }
   }, [action, id]);
@@ -92,7 +94,7 @@ const ApiComponent: React.FC<ApiComponentProps> = ({ type = 'links', action = 'g
 
   return (
     <div className="bg-gray-800 rounded-lg p-6">
-      <h2 className="text-xl font-bold mb-4">{displayType.charAt(0).toUpperCase() + displayType.slice(1)} {displayAction.charAt(0).toUpperCase() + displayAction.slice(1)}</h2>
+      <h2 className="text-xl font-bold mb-4">{displayType.charAt(0).toUpperCase() + displayType.slice(1)} {displayAction}</h2>
       
       {loading && (
         <div className="p-4 bg-gray-700 rounded mb-4">Loading...</div>
@@ -113,7 +115,7 @@ const ApiComponent: React.FC<ApiComponentProps> = ({ type = 'links', action = 'g
         disabled={loading}
         className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        {action === 'get' ? 'Refresh' : 'Execute'}
+        {action === 'getAll' ? 'Refresh' : 'Execute'}
       </button>
     </div>
   );

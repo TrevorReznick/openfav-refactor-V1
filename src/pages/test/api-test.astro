@@ -14,7 +14,7 @@ const title = 'API Test Page'
                 <script>
                     const props = {
                         type: 'links',
-                        action: 'get'
+                        action: 'getAll'
                     };
                 </script>
             </AppClient>
@@ -23,7 +23,16 @@ const title = 'API Test Page'
                 <script>
                     const props = {
                         type: 'collections',
-                        action: 'get'
+                        action: 'getAll'
+                    };
+                </script>
+            </AppClient>
+
+            <AppClient componentName="ApiComponent" client:load>
+                <script>
+                    const props = {
+                        type: 'lists',
+                        action: 'getAll'
                     };
                 </script>
             </AppClient>

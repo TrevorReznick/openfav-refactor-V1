@@ -1,6 +1,6 @@
 import type { ApiResponse } from '@/types'
 
-const api_url = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000'
+const api_url = import.meta.env.PUBLIC_API_URL || 'http://localhost:4321'
 
 export async function makeRequest<T>(
     endpoint: string,
