@@ -10,6 +10,7 @@
       "@/*": ["./src/*"]
     }
   },
+  "exclude": ["src/pages/api-test-example.astro"],
   "ts-node": {
     "esm": true,
     "experimentalSpecifierResolution": "node"

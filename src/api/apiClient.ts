@@ -1,65 +1,81 @@
-import { makeRequest } from '@/api/apiBuilder'
-import type { ApiResponse, Link, Collection, UserList, ListItem, CreateListData, UpdateListData, LinkFormData, CollectionFormData } from '@/types';
+import { makeRequest } from '@/api/apiBuilder';
+import type { ApiResponse, Link, Collection, UserList, CreateListData, UpdateListData, LinkFormData, CollectionFormData } from '@/types';
 
-const api_endpoint = 'api/v1/main/doQueries'
+const API_ENDPOINT = 'api/v1/main';
 
+/**
+ * Funzione di utilità per inviare richieste API.
+ * Gestisce la risposta e gli errori in modo centralizzato.
+ */
 export const sendApiRequest = async <T>(fetchFunc: () => Promise<ApiResponse<T>>): Promise<T> => {
     try {
         const response = await fetchFunc();
         if (response.data) {
             return response.data;
-        } else {
-            throw new Error(response.error || "Errore nella risposta dell'API");
         }
+        throw new Error(response.error || 'Errore nella risposta dell\'API');
     } catch (error) {
+        console.error('Errore durante la richiesta API:', error);
         throw error;
     }
 };
 
-/* @@ -- GET methods -- @@ */
+/**
+ * Funzioni generiche per operazioni CRUD.
+ */
 
+// GET methods
 export const fetchElements = <T>(type: string, params?: Record<string, any>): Promise<ApiResponse<T[]>> =>
-    makeRequest<T[]>(api_endpoint, { type: `get${type.charAt(0).toUpperCase() + type.slice(1)}`, ...params });
+    makeRequest<T[]>(API_ENDPOINT, { type: `get${capitalize(type)}`, ...params });
 
 export const fetchElement = <T>(type: string, id: string | number): Promise<ApiResponse<T>> =>
-    makeRequest<T>(api_endpoint, { type: `get${type.charAt(0).toUpperCase() + type.slice(1)}`, id });
+    makeRequest<T>(API_ENDPOINT, { type: `get${capitalize(type)}`, id });
 
-/* @@ -- POST methods -- @@ */
-
+// POST methods
 export const createElement = <T>(type: string, data: any): Promise<ApiResponse<T>> =>
-    makeRequest<T>(api_endpoint, { type: `create${type.charAt(0).toUpperCase() + type.slice(1)}`, ...data }, 'POST');
+    makeRequest<T>(API_ENDPOINT, { type: `create${capitalize(type)}`, ...data }, 'POST');
 
-/* @@ -- PUT methods -- @@ */
-
+// PUT methods
 export const updateElement = <T>(type: string, id: string | number, data: any): Promise<ApiResponse<T>> =>
-    makeRequest<T>(api_endpoint, { type: `update${type.charAt(0).toUpperCase() + type.slice(1)}`, id, ...data }, 'PUT');
+    makeRequest<T>(API_ENDPOINT, { type: `update${capitalize(type)}`, id, ...data }, 'PUT');
 
-/* @@ -- DELETE methods -- @@ */
-
+// DELETE methods
 export const deleteElement = (type: string, id: string | number): Promise<ApiResponse<void>> =>
-    makeRequest<void>(api_endpoint, { type: `delete${type.charAt(0).toUpperCase() + type.slice(1)}`, id }, 'DELETE');
+    makeRequest<void>(API_ENDPOINT, { type: `delete${capitalize(type)}`, id }, 'DELETE');
 
-// Helpers tipizzati per operazioni comuni
+/**
+ * Helper per capitalizzare la prima lettera di una stringa.
+ */
+const capitalize = (str: string): string =>
+    str.charAt(0).toUpperCase() + str.slice(1);
+
+/**
+ * Helpers tipizzati per operazioni specifiche su liste, link e collezioni.
+ */
+
 export const lists = {
-    getAll: () => fetchElements<UserList>('lists'),
-    getOne: (id: number) => fetchElement<UserList>('lists', id),
-    create: (data: CreateListData) => createElement<UserList>('lists', data),
-    update: (id: number, data: UpdateListData) => updateElement<UserList>('lists', id, data),
-    delete: (id: number) => deleteElement('lists', id)
+    getAll: (): Promise<ApiResponse<UserList[]>> => fetchElements<UserList>('lists'),
+    getOne: (id: number): Promise<ApiResponse<UserList>> => fetchElement<UserList>('list', id),
+    create: (data: CreateListData): Promise<ApiResponse<UserList>> => createElement<UserList>('list', data),
+    update: (id: number, data: UpdateListData): Promise<ApiResponse<UserList>> =>
+        updateElement<UserList>('list', id, data),
+    delete: (id: number): Promise<ApiResponse<void>> => deleteElement('list', id),
 };
 
 export const links = {
-    getAll: () => fetchElements<Link>('links'),
-    getOne: (id: string) => fetchElement<Link>('links', id),
-    create: (data: LinkFormData) => createElement<Link>('links', data),
-    update: (id: string, data: Partial<LinkFormData>) => updateElement<Link>('links', id, data),
-    delete: (id: string) => deleteElement('links', id)
+    getAll: (): Promise<ApiResponse<Link[]>> => fetchElements<Link>('links'),
+    getOne: (id: string): Promise<ApiResponse<Link>> => fetchElement<Link>('link', id),
+    create: (data: LinkFormData): Promise<ApiResponse<Link>> => createElement<Link>('link', data),
+    update: (id: string, data: Partial<LinkFormData>): Promise<ApiResponse<Link>> => updateElement<Link>('link', id, data),
+    delete: (id: string): Promise<ApiResponse<void>> => deleteElement('link', id),
 };
 
 export const collections = {
-    getAll: () => fetchElements<Collection>('collections'),
-    getOne: (id: string) => fetchElement<Collection>('collections', id),
-    create: (data: CollectionFormData) => createElement<Collection>('collections', data),
-    update: (id: string, data: Partial<CollectionFormData>) => updateElement<Collection>('collections', id, data),
-    delete: (id: string) => deleteElement('collections', id)
+    getAll: (): Promise<ApiResponse<Collection[]>> => fetchElements<Collection>('collections'),
+    getOne: (id: string): Promise<ApiResponse<Collection>> => fetchElement<Collection>('collection', id),
+    create: (data: CollectionFormData): Promise<ApiResponse<Collection>> =>
+        createElement<Collection>('collection', data),
+    update: (id: string, data: Partial<CollectionFormData>): Promise<ApiResponse<Collection>> =>
+        updateElement<Collection>('collection', id, data),
+    delete: (id: string): Promise<ApiResponse<void>> => deleteElement('collection', id),
 };

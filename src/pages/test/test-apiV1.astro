@@ -1,0 +1,852 @@
+---
+// src/pages/api-test.astro
+import { links, lists, collections } from '../api/apiClient'
+
+// API clients
+const apiClients = {
+  links,
+  lists,
+  collections
+}
+
+  try {
+    const response = await fetch(url, options)
+    const result = await response.json()
+
+    if (!response.ok) {
+      return {
+        error: result.error || 'Server error',
+        status: response.status
+      }
+    }
+
+    return {
+      data: result,
+      status: response.status
+    }
+  } catch (error) {
+    console.error('API request error:', error)
+    return {
+      error: (error as Error).message,
+      status: 500
+    }
+  }
+}
+  links: {
+    getAll: () => makeRequest('links'),
+    getOne: (id: string) => makeRequest(`links/${id}`),
+    create: (data: any) => makeRequest('links', 'POST', data),
+    update: (id: string, data: any) => makeRequest(`links/${id}`, 'PUT', data),
+    delete: (id: string) => makeRequest(`links/${id}`, 'DELETE'),
+  },
+  lists: {
+    getAll: () => makeRequest('lists'),
+    getOne: (id: string) => makeRequest(`lists/${id}`),
+    create: (data: any) => makeRequest('lists', 'POST', data),
+    update: (id: string, data: any) => makeRequest(`lists/${id}`, 'PUT', data),
+    delete: (id: string) => makeRequest(`lists/${id}`, 'DELETE'),
+  },
+  collections: {
+    getAll: () => makeRequest('collections'),
+    getOne: (id: string) => makeRequest(`collections/${id}`),
+    create: (data: any) => makeRequest('collections', 'POST', data),
+    update: (id: string, data: any) => makeRequest(`collections/${id}`, 'PUT', data),
+    delete: (id: string) => makeRequest(`collections/${id}`, 'DELETE'),
+  },
+}
+
+let responseData = ''
+let loading = false
+let error = ''
+let requestHistory: {
+  timestamp: string
+  method: string
+  endpoint: string
+  status: number
+  responseTime: string
+  request: string
+  response: any
+}[] = []
+
+// Function to update request history
+const updateRequestHistory = () => {
+  const historyContainer = document.getElementById('request-history')
+  if (!historyContainer) return
+
+  historyContainer.innerHTML = requestHistory
+    .map(
+      (req: {
+        timestamp: string
+        method: string
+        endpoint: string
+        status: number
+        responseTime: string
+        request: string
+        response: any
+      }) => `
+    <div class="history-item">
+      <div class="history-header">
+        <span class="method ${req.method.toLowerCase()}">${req.method}</span>
+        <span class="endpoint">${req.endpoint}</span>
+        <span class="status">${req.status}</span>
+        <span class="time">${req.responseTime}</span>
+        <span class="timestamp">${req.timestamp}</span>
+      </div>
+      <div class="history-details">
+        <div class="request-details">
+          <h4>Request:</h4>
+          <pre>${JSON.stringify(JSON.parse(req.request), null, 2)}</pre>
+        </div>
+        <div class="response-details">
+          <h4>Response:</h4>
+          <pre>${JSON.stringify(req.response, null, 2)}</pre>
+        </div>
+      </div>
+    </div>
+  `,
+    )
+    .join('')
+
+  // Add event handlers to show/hide details
+  document.querySelectorAll('.history-header').forEach((header) => {
+    header.addEventListener('click', () => {
+      const details = header.nextElementSibling
+      if (details instanceof HTMLElement) {
+        details.style.display =
+          details.style.display === 'none' ? 'block' : 'none'
+      }
+    })
+  })
+}
+
+// Function to run predefined examples
+const runExample = (
+  type: string,
+  method: string = 'GET',
+  body: Record<string, any> | null = null,
+) => {
+  const form = document.querySelector('form')
+  if (!form) return
+
+  const typeInput = form.elements.namedItem('type') as HTMLInputElement | null
+  if (typeInput) typeInput.value = type
+  const methodSelect = form.elements.namedItem(
+    'method',
+  ) as HTMLSelectElement | null
+  if (methodSelect) methodSelect.value = method
+  const bodyTextarea = form.elements.namedItem(
+    'body',
+  ) as HTMLTextAreaElement | null
+  if (bodyTextarea) {
+    if (body) {
+      bodyTextarea.value = JSON.stringify(body, null, 2)
+    } else {
+      bodyTextarea.value = ''
+    }
+  }
+
+  // Submit the form
+  const submitButton = form.querySelector('button[type="submit"]')
+  if (submitButton) (submitButton as HTMLButtonElement).click()
+}
+
+// API examples based on the types
+const apiExamples = [
+  // Links Operations
+  {
+    name: 'Get All Links',
+    type: 'getLinks',
+    method: 'GET',
+  },
+  {
+    name: 'Get Link By ID',
+    type: 'getLink',
+    method: 'GET',
+    body: {
+      id: 1,
+    },
+  },
+  {
+    name: 'Create New Link',
+    type: 'createLink',
+    method: 'POST',
+    body: {
+      title: 'Test Link',
+      url: 'https://example.com',
+      description: 'Test link created via API',
+    },
+  },
+  {
+    name: 'Update Link',
+    type: 'updateLink',
+    method: 'PUT',
+    body: {
+      id: 1,
+      title: 'Updated Link',
+      description: 'Updated description',
+    },
+  },
+  {
+    name: 'Delete Link',
+    type: 'deleteLink',
+    method: 'DELETE',
+    body: {
+      id: 1,
+    },
+  },
+  // Lists Operations
+  {
+    name: 'Get All Lists',
+    type: 'getLists',
+    method: 'GET',
+  },
+  {
+    name: 'Get List By ID',
+    type: 'getList',
+    method: 'GET',
+    body: {
+      id: 1,
+    },
+  },
+  {
+    name: 'Create New List',
+    type: 'createList',
+    method: 'POST',
+    body: {
+      name: 'Test List',
+      description: 'Test list created via API',
+      public: true,
+    },
+  },
+  {
+    name: 'Update List',
+    type: 'updateList',
+    method: 'PUT',
+    body: {
+      id: 1,
+      name: 'Updated List',
+      description: 'Updated description',
+    },
+  },
+  {
+    name: 'Delete List',
+    type: 'deleteList',
+    method: 'DELETE',
+    body: {
+      id: 1,
+    },
+  },
+  // Collections Operations
+  {
+    name: 'Get All Collections',
+    type: 'getCollections',
+    method: 'GET',
+  },
+  {
+    name: 'Get Collection By ID',
+    type: 'getCollection',
+    method: 'GET',
+    body: {
+      id: 1,
+    },
+  },
+  {
+    name: 'Create New Collection',
+    type: 'createCollection',
+    method: 'POST',
+    body: {
+      name: 'Test Collection',
+      description: 'Test collection created via API',
+      is_public: true,
+    },
+  },
+  {
+    name: 'Update Collection',
+    type: 'updateCollection',
+    method: 'PUT',
+    body: {
+      id: 1,
+      name: 'Updated Collection',
+      description: 'Updated description',
+    },
+  },
+  {
+    name: 'Delete Collection',
+    type: 'deleteCollection',
+    method: 'DELETE',
+    body: {
+      id: 1,
+    },
+  },
+  {
+    name: 'Update Link',
+    endpoint: 'main/doQueries?type=updateLink&id=1',
+    method: 'PUT',
+    body: {
+      title: 'Updated Link',
+      url: 'https://updated-example.com',
+      description: 'Updated test link',
+    },
+  },
+  {
+    name: 'Delete Link',
+    endpoint: 'main/doQueries?type=deleteLink&id=1',
+    method: 'DELETE',
+  },
+
+  // Lists Operations
+  {
+    name: 'Get All Lists',
+    endpoint: 'main/doQueries?type=getLists',
+    method: 'GET',
+  },
+  {
+    name: 'Get List By ID',
+    endpoint: 'main/doQueries?type=getList&id=1',
+    method: 'GET',
+  },
+  {
+    name: 'Create New List',
+    endpoint: 'main/doQueries?type=createList',
+    method: 'POST',
+    body: {
+      name: 'New List',
+      description: 'Test list created via API',
+    },
+  },
+  {
+    name: 'Update List',
+    endpoint: 'main/doQueries?type=updateList&id=1',
+    method: 'PUT',
+    body: {
+      name: 'Updated List',
+      description: 'Updated test list',
+    },
+  },
+  {
+    name: 'Delete List',
+    endpoint: 'main/doQueries?type=deleteList&id=1',
+    method: 'DELETE',
+  },
+
+  // Collections Operations
+  {
+    name: 'Get All Collections',
+    endpoint: 'main/doQueries?type=getCollections',
+    method: 'GET',
+  },
+  {
+    name: 'Get Collection By ID',
+    endpoint: 'main/doQueries?type=getCollection&id=1',
+    method: 'GET',
+  },
+  {
+    name: 'Create New Collection',
+    endpoint: 'main/doQueries?type=createCollection',
+    method: 'POST',
+    body: {
+      name: 'New Collection',
+      description: 'Test collection created via API',
+    },
+  },
+  {
+    name: 'Update Collection',
+    endpoint: 'main/doQueries?type=updateCollection&id=1',
+    method: 'PUT',
+    body: {
+      name: 'Updated Collection',
+      description: 'Updated test collection',
+    },
+  },
+  {
+    name: 'Delete Collection',
+    endpoint: 'main/doQueries?type=deleteCollection&id=1',
+    method: 'DELETE',
+  },
+  {
+    name: 'Get Link By ID',
+    endpoint: 'links/1',
+    method: 'GET',
+  },
+  {
+    name: 'Get Context Types',
+    endpoint: 'contexts',
+    method: 'GET',
+  },
+  {
+    name: 'Get Resource Types',
+    endpoint: 'resources',
+    method: 'GET',
+  },
+  {
+    name: 'Get Function Types',
+    endpoint: 'functions',
+    method: 'GET',
+  },
+]
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>API Test Page</title>
+    <link rel="stylesheet" href="/src/assets/css/main.css" />
+  </head>
+  <body>
+    <div class="container">
+      <h1>API Test Page</h1>
+
+      <div class="card">
+        <h2>Test API Endpoints</h2>
+
+        <div class="tabs">
+          <div class="tab active" data-tab="examples">API Examples</div>
+          <div class="tab" data-tab="custom">Custom Request</div>
+          <div class="tab" data-tab="history">Request History</div>
+        </div>
+
+        <div class="tab-content active" id="examples">
+          <div class="example-buttons">
+            {
+              apiExamples.map((example) => (
+                <button
+                  type="button"
+                  class="example-button"
+                  onclick={`runExample('${example.type}', '${example.method}', ${JSON.stringify(
+                    example.body || null,
+                  )})`}
+                >
+                  {example.name}
+                </button>
+              ))
+            }
+          </div>
+        </div>
+
+        <div class="tab-content" id="custom">
+          <form id="api-form" class="card">
+            <div>
+              <label for="type">Type:</label>
+              <input type="text" id="type" name="type" required />
+            </div>
+
+            <div>
+              <label for="method">Method:</label>
+              <select id="method" name="method">
+                <option value="GET">GET</option>
+                <option value="POST">POST</option>
+                <option value="PUT">PUT</option>
+                <option value="DELETE">DELETE</option>
+              </select>
+            </div>
+
+            <div>
+              <label for="body">Request Body (JSON):</label>
+              <textarea id="body" name="body" rows="10"></textarea>
+            </div>
+
+            <button type="submit">Send Request</button>
+          </form>
+        </div>
+
+        <div class="tab-content" id="history">
+          <div id="request-history"></div>
+        </div>
+
+        {error && <div class="error">{error}</div>}
+        {
+          responseData && (
+            <div class="form-group">
+              <label>Response</label>
+              <pre>{responseData}</pre>
+            </div>
+          )
+        }
+      </div>
+
+      <div id="status-bar" class="status-bar"></div>
+
+      <div class="card mt-4">
+        <h2>Console Output</h2>
+        <pre id="console-output" class="console"></pre>
+      </div>
+
+      <div class="card mt-4">
+        <h2>API Response</h2>
+        <pre id="api-response" class="response"></pre>
+      </div>
+    </div>
+    <script define:vars={{ apiClients }}>
+      const { links, lists, collections } = apiClients
+
+      // Console logging setup
+      function consoleLog(...args) {
+        const consoleOutput = document.getElementById('console-output')
+        if (consoleOutput) {
+          consoleOutput.textContent +=
+            args
+              .map((arg) =>
+                typeof arg === 'object'
+                  ? JSON.stringify(arg, null, 2)
+                  : String(arg),
+              )
+              .join(' ') + '\n'
+          consoleOutput.scrollTop = consoleOutput.scrollHeight
+        }
+      }
+
+      // Override console.log
+      const originalConsoleLog = console.log
+      console.log = (...args) => {
+        originalConsoleLog.apply(console, args)
+        consoleLog(...args)
+      }
+
+      // Copy of apiExamples from the Astro script
+      const apiExamples = [
+        {
+          name: 'Get All Lists',
+          endpoint: 'lists',
+          method: 'GET',
+        },
+        {
+          name: 'Get List By ID',
+          endpoint: 'lists/1',
+          method: 'GET',
+        },
+        {
+          name: 'Create New List',
+          endpoint: 'lists',
+          method: 'POST',
+          body: {
+            name: 'New List',
+            description: 'Test list created via API',
+            public: true,
+          },
+        },
+        {
+          name: 'Update List',
+          endpoint: 'lists/1',
+          method: 'PUT',
+          body: {
+            name: 'Updated List Name',
+            description: 'Updated description',
+          },
+        },
+        {
+          name: 'Delete List',
+          endpoint: 'lists/1',
+          method: 'DELETE',
+        },
+        {
+          name: 'Get List Items',
+          endpoint: 'lists/1/items',
+          method: 'GET',
+        },
+        {
+          name: 'Add Item to List',
+          endpoint: 'lists/items',
+          method: 'POST',
+          body: {
+            id_list: 1,
+            id_src: 123,
+          },
+        },
+        {
+          name: 'Remove Item from List',
+          endpoint: 'lists/items/1',
+          method: 'DELETE',
+        },
+        {
+          name: 'Create New Link',
+          endpoint: 'links',
+          method: 'POST',
+          body: {
+            name: 'Example Link',
+            url: 'https://example.com',
+            title: 'Example Website',
+            description: 'This is an example website',
+            user_id: 'user123',
+          },
+        },
+        {
+          name: 'Get Link By ID',
+          endpoint: 'links/1',
+          method: 'GET',
+        },
+        {
+          name: 'Get Context Types',
+          endpoint: 'contexts',
+          method: 'GET',
+        },
+        {
+          name: 'Get Resource Types',
+          endpoint: 'resources',
+          method: 'GET',
+        },
+        {
+          name: 'Get Function Types',
+          endpoint: 'functions',
+        },
+      ]
+
+      function updateRequestHistory() {
+        const historyContainer = document.getElementById('request-history')
+        if (!historyContainer) return
+
+        historyContainer.innerHTML = requestHistory
+          .map(
+            (entry) => `
+            <div class="history-item">
+              <div class="history-header">
+                <span>${entry.method}</span>
+                <span>${entry.endpoint}</span>
+                <span>${entry.status}</span>
+                <span>${entry.responseTime}</span>
+              </div>
+              <div class="history-details" style="display: none;">
+                <div>
+                  <h4>Request:</h4>
+                  <pre>${entry.request}</pre>
+                </div>
+                <div>
+                  <h4>Response:</h4>
+                  <pre>${JSON.stringify(entry.response, null, 2)}</pre>
+                </div>
+              </div>
+            </div>
+          `,
+          )
+          .join('')
+
+        // Add event handlers to show/hide details
+        document.querySelectorAll('.history-header').forEach((header) => {
+          header.addEventListener('click', () => {
+            const details = header.nextElementSibling
+            if (details instanceof HTMLElement) {
+              details.style.display =
+                details.style.display === 'none' ? 'block' : 'none'
+            }
+          })
+        })
+      }
+
+      // Function to run predefined examples
+      async function runExample(type, method = 'GET', body = null) {
+        const form = document.querySelector('form')
+        if (!form) return
+
+        const typeInput = form.querySelector('#type')
+        const methodSelect = form.querySelector('#method')
+        const bodyTextarea = form.querySelector('#body')
+
+        if (!typeInput || !methodSelect || !bodyTextarea) return
+
+        typeInput.value = type
+        methodSelect.value = method
+        bodyTextarea.value = body ? JSON.stringify(body, null, 2) : ''
+
+        // Submit form using our handler
+        const event = new SubmitEvent('submit', { cancelable: true })
+        form.dispatchEvent(event)
+      }
+
+      // Make functions available globally immediately
+      Object.assign(window, {
+        runExample,
+        updateRequestHistory,
+        consoleLog,
+      })
+
+      // Add event listeners
+      document.addEventListener('DOMContentLoaded', () => {
+        // Tab switching
+        document.querySelectorAll('.tab').forEach((tab) => {
+          tab.addEventListener('click', () => {
+            const tabId = tab.getAttribute('data-tab')
+            if (tabId) showTab(tabId)
+          })
+        })
+
+        // Form submission
+        const form = document.querySelector('form')
+        if (form) {
+          form.addEventListener('submit', async (event) => {
+            event.preventDefault()
+            const form = event.target
+            const method = form.querySelector('#method').value
+            const requestBody = form.querySelector('#body').value || '{}'
+
+            try {
+              loading = true
+              error = ''
+              responseData = ''
+
+              const startTime = performance.now()
+              let response
+
+              const body = requestBody ? JSON.parse(requestBody) : {}
+              const type = form.querySelector('#type').value
+
+              if (!type) {
+                throw new Error('Type parameter is required')
+              }
+
+              switch (type) {
+                // Links
+                case 'getLinks':
+                  response = await links.getAll()
+                  break
+                case 'getLink':
+                  if (!body.id) throw new Error('ID is required')
+                  response = await links.getOne(body.id)
+                  break
+                case 'createLink':
+                  response = await links.create(body)
+                  break
+                case 'updateLink':
+                  if (!body.id) throw new Error('ID is required')
+                  response = await links.update(body.id, body)
+                  break
+                case 'deleteLink':
+                  if (!body.id) throw new Error('ID is required')
+                  response = await links.delete(body.id)
+                  break
+
+                // Lists
+                case 'getLists':
+                  response = await lists.getAll()
+                  break
+                case 'getList':
+                  if (!body.id) throw new Error('ID is required')
+                  response = await lists.getOne(body.id)
+                  break
+                case 'createList':
+                  response = await lists.create(body)
+                  break
+                case 'updateList':
+                  if (!body.id) throw new Error('ID is required')
+                  response = await lists.update(body.id, body)
+                  break
+                case 'deleteList':
+                  if (!body.id) throw new Error('ID is required')
+                  response = await lists.delete(body.id)
+                  break
+
+                // Collections
+                case 'getCollections':
+                  response = await collections.getAll()
+                  break
+                case 'getCollection':
+                  if (!body.id) throw new Error('ID is required')
+                  response = await collections.getOne(body.id)
+                  break
+                case 'createCollection':
+                  response = await collections.create(body)
+                  break
+                case 'updateCollection':
+                  if (!body.id) throw new Error('ID is required')
+                  response = await collections.update(body.id, body)
+                  break
+                case 'deleteCollection':
+                  if (!body.id) throw new Error('ID is required')
+                  response = await collections.delete(body.id)
+                  break
+
+                default:
+                  throw new Error(`Unknown operation type: ${type}`)
+              }
+
+              const endTime = performance.now()
+              const responseTime = Math.round(endTime - startTime)
+
+              responseData = JSON.stringify(response, null, 2)
+
+              // Add the call to history
+              requestHistory.unshift({
+                timestamp: new Date().toLocaleString(),
+                method,
+                endpoint: type,
+                status: response.status || 200,
+                responseTime: `${responseTime}ms`,
+                request: requestBody,
+                response: response,
+              })
+
+              // Keep only the last 10 requests
+              if (requestHistory.length > 10) {
+                requestHistory = requestHistory.slice(0, 10)
+              }
+
+              // Update the display
+              updateRequestHistory()
+
+              // Update response display
+              const apiResponse = document.getElementById('api-response')
+              if (apiResponse) {
+                apiResponse.textContent = responseData
+              }
+            } catch (err) {
+              error = err instanceof Error ? err.message : 'An error occurred'
+              console.error('API Error:', err)
+              const consoleOutput = document.getElementById('console-output')
+              if (consoleOutput) {
+                consoleOutput.textContent = `Error: ${error}`
+              }
+            } finally {
+              loading = false
+            }
+          })
+        }
+      })
+
+      // Tab switching logic
+      function showTab(tabId) {
+        document.querySelectorAll('.tab').forEach((tab) => {
+          if (tab instanceof HTMLElement) {
+            if (tab.getAttribute('data-tab') === tabId) {
+              tab.classList.add('active')
+            } else {
+              tab.classList.remove('active')
+            }
+          }
+        })
+        document.querySelectorAll('.tab-content').forEach((tabContent) => {
+          if (tabContent instanceof HTMLElement) {
+            if (tabContent.id === tabId) {
+              tabContent.classList.add('active')
+            } else {
+              tabContent.classList.remove('active')
+            }
+          }
+        })
+      }
+
+      document.querySelectorAll('.tab').forEach((tab) => {
+        if (tab instanceof HTMLElement) {
+          tab.addEventListener('click', () => {
+            const tabId = tab.getAttribute('data-tab')
+            if (tabId) showTab(tabId)
+          })
+        }
+      })
+
+      // Attach form submit handler
+      const formElement = document.querySelector('form')
+      if (formElement) {
+        formElement.addEventListener('submit', handleSubmit)
+      }
+
+      // Initial history update
+      updateRequestHistory()
+
+      // Initialize tab view
+      const defaultTab = document
+        .querySelector('.tab')
+        ?.getAttribute('data-tab')
+      if (defaultTab) showTab(defaultTab)
+    </script>
+  </body>
+</html>
