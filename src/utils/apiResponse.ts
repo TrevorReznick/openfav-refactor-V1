@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
-import type { ApiError } from '../types/errors';
-import { handleError } from '../types/errors';
+import type { ApiError } from '../types/old/errors';
+import { handleError } from '../types/old/errors';
 
 type SuccessResponse<T> = {
   success: true;

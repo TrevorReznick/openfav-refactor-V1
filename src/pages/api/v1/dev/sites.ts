@@ -1,15 +1,17 @@
 import { supabase } from '@/providers/supabase';
-import type { 
-  CreateLinkRequest, 
-  MainTableData, 
-  SubMainTableData, 
+import type {
+  //CreateLinkRequest,
+  MainTableData,
+  SubMainTableData,
   CategoriesTagsData,
   ApiResponse
 } from '@/types';
+import { get } from '../main';
 
 /**
  * Crea un nuovo link con tutte le relative associazioni
  */
+/*
 export async function createLinkWithAssociations(linkData: CreateLinkRequest): Promise<ApiResponse<{ id: string | number }>> {
   try {
     // 1. Crea il record principale
@@ -82,7 +84,7 @@ export async function createLinkWithAssociations(linkData: CreateLinkRequest): P
       }
     }
 
-    return { 
+    return {
       data: { id: sourceId },
       status: 200
     };
@@ -94,11 +96,12 @@ export async function createLinkWithAssociations(linkData: CreateLinkRequest): P
     };
   }
 }
+*
 
 /**
  * Ottiene i link con tutte le relative associazioni
  */
-export async function getLinksWithAssociations() {
+export async function getSites() {
   try {
     const { data, error } = await supabase
       .from('main_table')
@@ -140,9 +143,9 @@ export async function getLinksWithAssociations() {
       throw error;
     }
 
-    return { 
+    return {
       data,
-      status: 200 
+      status: 200
     };
   } catch (error: any) {
     console.error('Error fetching links with associations:', error);
@@ -154,6 +157,6 @@ export async function getLinksWithAssociations() {
 }
 
 export default {
-  createLinkWithAssociations,
-  getLinksWithAssociations
-};
+  //createLinkWithAssociations,
+  getSites
+}

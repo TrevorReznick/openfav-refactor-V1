@@ -1,46 +1,29 @@
 import { makeRequest } from '@/api/apiBuilder';
 import type { ApiResponse, Link, Collection, UserList, CreateListData, UpdateListData, LinkFormData, CollectionFormData } from '@/types';
 
-const API_ENDPOINT = 'api/v1/main';
-
-/**
- * Funzione di utilità per inviare richieste API.
- * Gestisce la risposta e gli errori in modo centralizzato.
- */
-export const sendApiRequest = async <T>(fetchFunc: () => Promise<ApiResponse<T>>): Promise<T> => {
-    try {
-        const response = await fetchFunc();
-        if (response.data) {
-            return response.data;
-        }
-        throw new Error(response.error || 'Errore nella risposta dell\'API');
-    } catch (error) {
-        console.error('Errore durante la richiesta API:', error);
-        throw error;
-    }
-};
+const API_ENDPOINT = 'api/v1/main/doQueries'
 
 /**
  * Funzioni generiche per operazioni CRUD.
  */
 
 // GET methods
-export const fetchElements = <T>(type: string, params?: Record<string, any>): Promise<ApiResponse<T[]>> =>
+const fetchElements = <T>(type: string, params?: Record<string, any>): Promise<ApiResponse<T[]>> =>
     makeRequest<T[]>(API_ENDPOINT, { type: `get${capitalize(type)}`, ...params });
 
-export const fetchElement = <T>(type: string, id: string | number): Promise<ApiResponse<T>> =>
+const fetchElement = <T>(type: string, id: string | number): Promise<ApiResponse<T>> =>
     makeRequest<T>(API_ENDPOINT, { type: `get${capitalize(type)}`, id });
 
 // POST methods
-export const createElement = <T>(type: string, data: any): Promise<ApiResponse<T>> =>
+const createElement = <T>(type: string, data: any): Promise<ApiResponse<T>> =>
     makeRequest<T>(API_ENDPOINT, { type: `create${capitalize(type)}`, ...data }, 'POST');
 
 // PUT methods
-export const updateElement = <T>(type: string, id: string | number, data: any): Promise<ApiResponse<T>> =>
+const updateElement = <T>(type: string, id: string | number, data: any): Promise<ApiResponse<T>> =>
     makeRequest<T>(API_ENDPOINT, { type: `update${capitalize(type)}`, id, ...data }, 'PUT');
 
 // DELETE methods
-export const deleteElement = (type: string, id: string | number): Promise<ApiResponse<void>> =>
+const deleteElement = (type: string, id: string | number): Promise<ApiResponse<void>> =>
     makeRequest<void>(API_ENDPOINT, { type: `delete${capitalize(type)}`, id }, 'DELETE');
 
 /**

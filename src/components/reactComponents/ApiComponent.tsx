@@ -1,0 +1,122 @@
+import React, { useState, useEffect } from 'react';
+import { toast } from 'react-hot-toast';
+import { links, collections, lists } from '@/api/apiClient';
+import type { Link, Collection, UserList } from '@/types';
+
+interface ApiComponentProps {
+  type: 'links' | 'collections' | 'lists';
+  action: 'get' | 'create' | 'update' | 'delete';
+  id?: string | number;
+  data?: any;
+}
+
+const ApiComponent: React.FC<ApiComponentProps> = ({ type = 'links', action = 'get', id, data }) => {
+  const [result, setResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleApiCall = async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      let response: any;
+
+      switch (action) {
+        case 'get':
+          if (id) {
+            response = await (type === 'links' 
+              ? links.getOne(id as string) 
+              : type === 'collections' 
+                ? collections.getOne(id as string) 
+                : lists.getOne(id as number));
+          } else {
+            response = await (type === 'links' 
+              ? links.getAll() 
+              : type === 'collections' 
+                ? collections.getAll() 
+                : lists.getAll());
+          }
+          break;
+
+        case 'create':
+          response = await (type === 'links' 
+            ? links.create(data as any) 
+            : type === 'collections' 
+              ? collections.create(data as any) 
+              : lists.create(data as any));
+          break;
+
+        case 'update':
+          if (!id) throw new Error('ID is required for update');
+          response = await (type === 'links' 
+            ? links.update(id as string, data as any) 
+            : type === 'collections' 
+              ? collections.update(id as string, data as any) 
+              : lists.update(id as number, data as any));
+          break;
+
+        case 'delete':
+          if (!id) throw new Error('ID is required for delete');
+          response = await (type === 'links' 
+            ? links.delete(id as string) 
+            : type === 'collections' 
+              ? collections.delete(id as string) 
+              : lists.delete(id as number));
+          break;
+      }
+
+      if (response.error) {
+        throw new Error(response.error);
+      }
+
+      setResult(response.data);
+      toast.success(`Operation successful!`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+      toast.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (action === 'get') {
+      handleApiCall();
+    }
+  }, [action, id]);
+
+  // Ensure type and action are defined
+  const displayType = type || 'links';
+  const displayAction = action || 'get';
+
+  return (
+    <div className="bg-gray-800 rounded-lg p-6">
+      <h2 className="text-xl font-bold mb-4">{displayType.charAt(0).toUpperCase() + displayType.slice(1)} {displayAction.charAt(0).toUpperCase() + displayAction.slice(1)}</h2>
+      
+      {loading && (
+        <div className="p-4 bg-gray-700 rounded mb-4">Loading...</div>
+      )}
+
+      {error && (
+        <div className="p-4 bg-red-600 rounded mb-4 text-white">{error}</div>
+      )}
+
+      {result && (
+        <div className="p-4 bg-gray-700 rounded mb-4">
+          <pre className="text-sm text-gray-300">{JSON.stringify(result, null, 2)}</pre>
+        </div>
+      )}
+
+      <button 
+        onClick={handleApiCall}
+        disabled={loading}
+        className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {action === 'get' ? 'Refresh' : 'Execute'}
+      </button>
+    </div>
+  );
+};
+
+export default ApiComponent;

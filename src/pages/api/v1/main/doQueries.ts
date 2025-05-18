@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro'
-import { createLinkWithAssociations, getLinksWithAssociations } from './addLinksLists'
+import { getSites /*getLinksWithAssociations*/ } from '@/pages/api/v1/dev/sites'
 import type { CreateLinkRequest } from '@/types'
 
 // HTTP methods exported for Astro
@@ -59,11 +59,13 @@ const handleApiRequest = async (method: string, type: string, params: any, reque
     switch (type) {
       case 'getLinks':
         if (method !== 'GET') throw new Error('Invalid method for getLinks')
-        return await getLinksWithAssociations()
+        return await getSites()
 
+      /*
       case 'createLink':
         if (method !== 'POST') throw new Error('Invalid method for createLink')
         return await createLinkWithAssociations(data as CreateLinkRequest)
+      */
 
       default:
         throw new Error(`Unknown operation type: ${type}`)

@@ -6,53 +6,7 @@ import { links, lists, collections } from '@/api/apiClient'
 const apiClients = {
   links,
   lists,
-  collections
-}
-
-  try {
-    const response = await fetch(url, options)
-    const result = await response.json()
-
-    if (!response.ok) {
-      return {
-        error: result.error || 'Server error',
-        status: response.status
-      }
-    }
-
-    return {
-      data: result,
-      status: response.status
-    }
-  } catch (error) {
-    console.error('API request error:', error)
-    return {
-      error: (error as Error).message,
-      status: 500
-    }
-  }
-}
-  links: {
-    getAll: () => makeRequest('links'),
-    getOne: (id: string) => makeRequest(`links/${id}`),
-    create: (data: any) => makeRequest('links', 'POST', data),
-    update: (id: string, data: any) => makeRequest(`links/${id}`, 'PUT', data),
-    delete: (id: string) => makeRequest(`links/${id}`, 'DELETE'),
-  },
-  lists: {
-    getAll: () => makeRequest('lists'),
-    getOne: (id: string) => makeRequest(`lists/${id}`),
-    create: (data: any) => makeRequest('lists', 'POST', data),
-    update: (id: string, data: any) => makeRequest(`lists/${id}`, 'PUT', data),
-    delete: (id: string) => makeRequest(`lists/${id}`, 'DELETE'),
-  },
-  collections: {
-    getAll: () => makeRequest('collections'),
-    getOne: (id: string) => makeRequest(`collections/${id}`),
-    create: (data: any) => makeRequest('collections', 'POST', data),
-    update: (id: string, data: any) => makeRequest(`collections/${id}`, 'PUT', data),
-    delete: (id: string) => makeRequest(`collections/${id}`, 'DELETE'),
-  },
+  collections,
 }
 
 let responseData = ''
@@ -154,7 +108,7 @@ const runExample = (
 const apiExamples = [
   // Links Operations
   {
-    name: 'Get All Links',
+    name: 'Get All Sites',
     type: 'getLinks',
     method: 'GET',
   },
