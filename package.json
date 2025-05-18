@@ -18,6 +18,7 @@
     "react-dom": "^19.1.0"
   },
   "devDependencies": {
+    "@rollup/plugin-dynamic-import-vars": "^2.1.5",
     "@types/react": "^19.1.4",
     "autoprefixer": "^10.4.21",
     "postcss": "^8.5.3",

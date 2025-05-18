@@ -1,6 +1,6 @@
 import React, { lazy, Suspense } from 'react';
 import type { ReactNode, FC, ComponentType } from 'react';
-import GenericComponent from '@/react/ReactLayerComponent';
+import ReactLayerComponent from '@/react/layers/ReactLayerComponent';
 import ThemeProvider from '@/react/providers/theme-provider';
 import NavigationProvider from '@/react/providers/NavigationProvider';
 import AuthProvider from '@/react/providers/AuthProvider';
@@ -22,14 +22,19 @@ const AppClient: FC<AppClientProps> = ({ componentName, children, additionalProv
 
   const DynamicComponent = componentName
     ? lazy(() => {
-      return new Promise<{ default: React.ComponentType }>(resolve => {
-        setTimeout(() => {
-          resolve({
-            default: () => <div>Test Component Loaded for {componentName}</div>
+        // Vite-friendly dynamic import with @vite-ignore
+        return import(/* @vite-ignore */ `../components/reactComponents/${componentName}`)
+          .catch(error => {
+            console.error(`Failed to load component ${componentName}:`, error);
+            return Promise.resolve({
+              default: () => (
+                <div className="text-red-500 p-4">
+                  Failed to load component: {componentName}
+                </div>
+              )
+            });
           });
-        }, 500);
-      });
-    })
+      })
     : null;
 
   const content = (
@@ -44,9 +49,9 @@ const AppClient: FC<AppClientProps> = ({ componentName, children, additionalProv
   );
 
   return (
-    <GenericComponent providers={providers}>
+    <ReactLayerComponent providers={providers}>
       {content}
-    </GenericComponent>
+    </ReactLayerComponent>
   );
 };
 

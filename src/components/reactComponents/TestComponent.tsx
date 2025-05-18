@@ -3,7 +3,7 @@ import React from 'react';
 const TestComponent = () => {
   return (
     <div>
-      <p>This is the TestComponent</p>
+      <p>Ciao; stai vedendo un componente dinamico!</p>
     </div>
   );
 };
