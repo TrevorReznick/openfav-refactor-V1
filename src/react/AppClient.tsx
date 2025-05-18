@@ -4,6 +4,7 @@ import ReactLayerComponent from '@/react/layers/ReactLayerComponent';
 import ThemeProvider from '@/react/providers/theme-provider';
 import NavigationProvider from '@/react/providers/NavigationProvider';
 import AuthProvider from '@/react/providers/AuthProvider';
+import ToastProvider from '@/react/providers/ToastProvider';
 import LoadingFallback from '@/components/reactComponents/LoadingFallback';
 
 interface AppClientProps {
@@ -17,6 +18,7 @@ const AppClient: FC<AppClientProps> = ({ componentName, children, additionalProv
     ThemeProvider,
     NavigationProvider,
     AuthProvider,
+    ToastProvider,
     ...additionalProviders,
   ];
 
