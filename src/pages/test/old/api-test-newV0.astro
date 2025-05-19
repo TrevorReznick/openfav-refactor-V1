@@ -1,0 +1,342 @@
+---
+import LayoutBase from '@/layouts/LayoutBase.astro'
+import * as api from '@/api/apiClient'
+import type { Link, Collection, UserList } from '@/types'
+
+// Fetch initial data
+const sitesResponse = await api.sites.getAll()
+const sites = sitesResponse.data || []
+
+const listsResponse = await api.lists.getAll()
+const lists = listsResponse.data || []
+
+const collectionsResponse = await api.collections.getAll()
+const collections = collectionsResponse.data || []
+
+// Log results for testing
+console.log('API Test Results:', {
+  sites,
+  lists,
+  collections,
+})
+
+// Track API test results
+interface ApiTestResults {
+  success: boolean
+  sites: Link[]
+  lists: UserList[]
+  collections: Collection[]
+  errors: string[]
+}
+
+const testResults: ApiTestResults = {
+  success: true,
+  sites: [],
+  lists: [],
+  collections: [],
+  errors: [],
+}
+
+// Test sites API
+try {
+  // Create test site
+  const siteResponse = await api.sites.create({
+    name: 'Test Site',
+    description: 'Created via API test',
+    url: 'https://example.com',
+  })
+
+  if (siteResponse.data) {
+    const siteId = siteResponse.data.id
+    testResults.sites.push(siteResponse.data)
+
+    // Test update
+    const updateResponse = await api.sites.update(siteId, {
+      description: 'Updated via API test',
+    })
+
+    if (updateResponse.data) {
+      testResults.sites.push(updateResponse.data)
+    }
+
+    // Clean up - delete the test site
+    await api.sites.delete(siteId)
+  }
+} catch (error) {
+  testResults.success = false
+  testResults.errors.push(
+    `Sites API error: ${
+      typeof error === 'object' && error !== null && 'message' in error
+        ? (error as { message: string }).message
+        : String(error)
+    }`,
+  )
+}
+
+// Test lists API
+try {
+  // Create test list
+  const listResponse = await api.lists.create({
+    name: 'Test List',
+    description: 'Created via API test',
+    public: true,
+  })
+
+  if (listResponse.data) {
+    const listId = listResponse.data.id
+    testResults.lists.push(listResponse.data)
+
+    // Test update
+    const updateResponse = await api.lists.update(listId, {
+      description: 'Updated via API test',
+    })
+
+    if (updateResponse.data) {
+      testResults.lists.push(updateResponse.data)
+    }
+
+    // Clean up - delete the test list
+    await api.lists.delete(listId)
+  }
+} catch (error) {
+  testResults.success = false
+  testResults.errors.push(
+    `Lists API error: ${
+      typeof error === 'object' && error !== null && 'message' in error
+        ? (error as { message: string }).message
+        : String(error)
+    }`,
+  )
+}
+
+// Test collections API
+try {
+  // Create test collection
+  const collectionResponse = await api.collections.create({
+    name: 'Test Collection',
+    description: 'Created via API test',
+  })
+
+  if (collectionResponse.data) {
+    const collectionId = collectionResponse.data.id
+    testResults.collections.push(collectionResponse.data)
+
+    // Test update
+    const updateResponse = await api.collections.update(collectionId, {
+      description: 'Updated via API test',
+    })
+
+    if (updateResponse.data) {
+      testResults.collections.push(updateResponse.data)
+    }
+
+    // Clean up - delete the test collection
+    await api.collections.delete(collectionId)
+  }
+} catch (error) {
+  testResults.success = false
+  testResults.errors.push(
+    `Collections API error: ${
+      typeof error === 'object' && error !== null && 'message' in error
+        ? (error as { message: string }).message
+        : String(error)
+    }`,
+  )
+}
+
+// Log final test results
+console.log('Final API Test Results:', testResults)
+---
+
+<LayoutBase title="API Test Page">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Status Overview -->
+    <div class="mb-8 grid grid-cols-1 md:grid-cols-3 gap-4">
+      {
+        [
+          {
+            title: 'Total Sites',
+            value: sites.length,
+            icon: '🔗',
+            color: 'primary',
+          },
+          {
+            title: 'Total Lists',
+            value: lists.length,
+            icon: '📋',
+            color: 'secondary',
+          },
+          {
+            title: 'Total Collections',
+            value: collections.length,
+            icon: '📁',
+            color: 'accent',
+          },
+        ].map((stat) => (
+          <div class="bg-surface overflow-hidden shadow-lg rounded-lg border border-gray-800 group hover:border-gray-700 transition-colors duration-200">
+            <div class="px-4 py-5 sm:p-6">
+              <div class="flex items-center justify-between">
+                <dt class="text-sm font-medium text-gray-400 truncate group-hover:text-gray-300 transition-colors duration-200">
+                  <span class="mr-2">{stat.icon}</span>
+                  {stat.title}
+                </dt>
+                <dd class="text-3xl font-semibold text-gray-300">
+                  {stat.value}
+                </dd>
+              </div>
+            </div>
+          </div>
+        ))
+      }
+    </div>
+
+    <!-- API Test Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <!-- Sites Operations -->
+      <div class="bg-gray-800 rounded-lg p-6">
+        <h2 class="text-xl font-bold mb-4">Sites Operations</h2>
+
+        <div class="space-y-4">
+          <button
+            class="w-full bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+            onclick="fetch('api/v1/main/doQueries?query=getSites', { method: 'GET' })"
+          >
+            Get All Sites
+          </button>
+
+          <button
+            class="w-full bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+            onclick="fetch('api/v1/main/doQueries?query=createSite', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                name: 'Test Site',
+                description: 'Created via API test',
+                url: 'https://example.com'
+              })
+            })"
+          >
+            Create Site
+          </button>
+
+          <button
+            class="w-full bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+            onclick="fetch('api/v1/main/doQueries?query=updateSite&id=1', {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                description: 'Updated via API test'
+              })
+            })"
+          >
+            Update Site
+          </button>
+
+          <button
+            class="w-full bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+            onclick="fetch('api/v1/main/doQueries?query=deleteSite&id=1', { method: 'DELETE' })"
+          >
+            Delete Site
+          </button>
+        </div>
+      </div>
+
+      <!-- Lists Operations -->
+      <div class="bg-gray-800 rounded-lg p-6">
+        <h2 class="text-xl font-bold mb-4">Lists Operations</h2>
+
+        <div class="space-y-4">
+          <button
+            class="w-full bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+            onclick="fetch('api/v1/main/doQueries?query=getLists', { method: 'GET' })"
+          >
+            Get All Lists
+          </button>
+
+          <button
+            class="w-full bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+            onclick="fetch('api/v1/main/doQueries?query=createList', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                name: 'Test List',
+                description: 'Created via API test',
+                public: true
+              })
+            })"
+          >
+            Create List
+          </button>
+
+          <button
+            class="w-full bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+            onclick="fetch('api/v1/main/doQueries?query=updateList&id=1', {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                description: 'Updated via API test'
+              })
+            })"
+          >
+            Update List
+          </button>
+
+          <button
+            class="w-full bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+            onclick="fetch('api/v1/main/doQueries?query=deleteList&id=1', { method: 'DELETE' })"
+          >
+            Delete List
+          </button>
+        </div>
+      </div>
+
+      <!-- Collections Operations -->
+      <div class="bg-gray-800 rounded-lg p-6">
+        <h2 class="text-xl font-bold mb-4">Collections Operations</h2>
+
+        <div class="space-y-4">
+          <button
+            class="w-full bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+            onclick="fetch('api/v1/main/doQueries?query=getCollections', { method: 'GET' })"
+          >
+            Get All Collections
+          </button>
+
+          <button
+            class="w-full bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+            onclick="fetch('api/v1/main/doQueries?query=createCollection', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                name: 'Test Collection',
+                description: 'Created via API test'
+              })
+            })"
+          >
+            Create Collection
+          </button>
+
+          <button
+            class="w-full bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+            onclick="fetch('api/v1/main/doQueries?query=updateCollection&id=1', {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                description: 'Updated via API test'
+              })
+            })"
+          >
+            Update Collection
+          </button>
+
+          <button
+            class="w-full bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+            onclick="fetch('api/v1/main/doQueries?query=deleteCollection&id=1', { method: 'DELETE' })"
+          >
+            Delete Collection
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</LayoutBase>
