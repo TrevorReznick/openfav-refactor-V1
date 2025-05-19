@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
-import { links, collections, lists } from '@/api/apiClient';
+import { sites, collections, lists } from '@/api/apiClient';
 import type { Link, Collection, UserList } from '@/types';
 
 interface ApiComponentProps {
-  type: 'links' | 'collections' | 'lists';
+  type: 'sites' | 'collections' | 'lists';
   action: 'getAll' | 'getOne' | 'create' | 'update' | 'delete';
   id?: string | number;
   data?: any;
 }
 
-const ApiComponent: React.FC<ApiComponentProps> = ({ type = 'links', action = 'getAll', id, data }) => {
+const ApiComponent: React.FC<ApiComponentProps> = ({ type = 'sites', action = 'getAll', id, data }) => {
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -24,8 +24,8 @@ const ApiComponent: React.FC<ApiComponentProps> = ({ type = 'links', action = 'g
 
       switch (action) {
         case 'getAll':
-          response = await (type === 'links' 
-            ? links.getAll() 
+          response = await (type === 'sites' 
+            ? sites.getAll() 
             : type === 'collections' 
               ? collections.getAll() 
               : lists.getAll());
@@ -33,8 +33,8 @@ const ApiComponent: React.FC<ApiComponentProps> = ({ type = 'links', action = 'g
 
         case 'getOne':
           if (!id) throw new Error('ID is required for getOne');
-          response = await (type === 'links' 
-            ? links.getOne(id as string) 
+          response = await (type === 'sites' 
+            ? sites.getOne(id as string) 
             : type === 'collections' 
               ? collections.getOne(id as string) 
               : lists.getOne(id as number));
@@ -42,8 +42,8 @@ const ApiComponent: React.FC<ApiComponentProps> = ({ type = 'links', action = 'g
 
         case 'create':
           if (!data) throw new Error('Data is required for create');
-          response = await (type === 'links' 
-            ? links.create(data as any) 
+          response = await (type === 'sites' 
+            ? sites.create(data as any) 
             : type === 'collections' 
               ? collections.create(data as any) 
               : lists.create(data as any));
@@ -51,8 +51,8 @@ const ApiComponent: React.FC<ApiComponentProps> = ({ type = 'links', action = 'g
 
         case 'update':
           if (!id || !data) throw new Error('ID and data are required for update');
-          response = await (type === 'links' 
-            ? links.update(id as string, data as any) 
+          response = await (type === 'sites' 
+            ? sites.update(id as string, data as any) 
             : type === 'collections' 
               ? collections.update(id as string, data as any) 
               : lists.update(id as number, data as any));
@@ -60,8 +60,8 @@ const ApiComponent: React.FC<ApiComponentProps> = ({ type = 'links', action = 'g
 
         case 'delete':
           if (!id) throw new Error('ID is required for delete');
-          response = await (type === 'links' 
-            ? links.delete(id as string) 
+          response = await (type === 'sites' 
+            ? sites.delete(id as string) 
             : type === 'collections' 
               ? collections.delete(id as string) 
               : lists.delete(id as number));
@@ -83,13 +83,14 @@ const ApiComponent: React.FC<ApiComponentProps> = ({ type = 'links', action = 'g
   };
 
   useEffect(() => {
-    if (action === 'getAll') {
+    // Only fetch data when the component mounts if it's a getOne operation
+    if (action === 'getOne') {
       handleApiCall();
     }
   }, [action, id]);
 
   // Ensure type and action are defined
-  const displayType = type || 'links';
+  const displayType = type || 'sites';
   const displayAction = action || 'get';
 
   return (
@@ -115,7 +116,7 @@ const ApiComponent: React.FC<ApiComponentProps> = ({ type = 'links', action = 'g
         disabled={loading}
         className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        {action === 'getAll' ? 'Refresh' : 'Execute'}
+        Fetch Data
       </button>
     </div>
   );

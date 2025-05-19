@@ -13,7 +13,7 @@ const title = 'API Test Page'
             <AppClient componentName="ApiComponent" client:load>
                 <script>
                     const props = {
-                        type: 'links',
+                        type: 'sites',
                         action: 'getAll'
                     };
                 </script>
@@ -37,14 +37,7 @@ const title = 'API Test Page'
                 </script>
             </AppClient>
 
-            <AppClient componentName="ApiComponent" client:load>
-                <script>
-                    const props = {
-                        type: 'lists',
-                        action: 'get'
-                    };
-                </script>
-            </AppClient>
+
         </div>
     </div>
 </LayoutBase>

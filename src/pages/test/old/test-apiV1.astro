@@ -1,10 +1,11 @@
 ---
 // src/pages/api-test.astro
-import { links, lists, collections } from '@/api/apiClient'
+import { sites, lists, collections } from '@/api/apiClient'
+import getSites from '@/pages/api/v1/main/scripts/sites'
 
 // API clients
 const apiClients = {
-  links,
+  sites,
   lists,
   collections,
 }
@@ -109,7 +110,7 @@ const apiExamples = [
   // Links Operations
   {
     name: 'Get All Sites',
-    type: 'getLinks',
+    type: 'getSites',
     method: 'GET',
   },
   {
@@ -650,7 +651,7 @@ const apiExamples = [
 
               switch (type) {
                 // Links
-                case 'getLinks':
+                case 'getSites':
                   response = await links.getAll()
                   break
                 case 'getLink':

@@ -6,7 +6,7 @@ import type {
   CategoriesTagsData,
   ApiResponse
 } from '@/types';
-import { get } from '../main';
+import { get } from '../../main';
 
 /**
  * Crea un nuovo link con tutte le relative associazioni

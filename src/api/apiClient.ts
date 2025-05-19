@@ -45,8 +45,8 @@ export const lists = {
     delete: (id: number): Promise<ApiResponse<void>> => deleteElement('list', id),
 };
 
-export const links = {
-    getAll: (): Promise<ApiResponse<Link[]>> => fetchElements<Link>('links'),
+export const sites = {
+    getAll: (): Promise<ApiResponse<Link[]>> => fetchElements<Link>('sites'),
     getOne: (id: string): Promise<ApiResponse<Link>> => fetchElement<Link>('link', id),
     create: (data: LinkFormData): Promise<ApiResponse<Link>> => createElement<Link>('link', data),
     update: (id: string, data: Partial<LinkFormData>): Promise<ApiResponse<Link>> => updateElement<Link>('link', id, data),

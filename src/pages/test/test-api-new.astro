@@ -1,0 +1,175 @@
+---
+import LayoutBase from '@/layouts/LayoutBase.astro'
+import AppClient from '@/react/AppClient'
+import { sites, lists, collections } from '@/api/apiClient'
+import type { Link, Collection, UserList } from '@/types'
+import ApiConsole from '@/components/reactComponents/ApiConsole'
+import ApiStatusBar from '@/components/reactComponents/ApiStatusBar'
+
+const title = 'API Test Page'
+
+// API clients
+const apiClients = {
+  sites,
+  lists,
+  collections,
+}
+
+// Track API results
+const apiResults: {
+  sites: Link[]
+  lists: UserList[]
+  collections: Collection[]
+  errors: string[]
+  logs: string[]
+} = {
+  sites: [],
+  lists: [],
+  collections: [],
+  errors: [],
+  logs: []
+}
+
+// Fetch initial data
+const sitesResponse = await sites.getAll()
+const listsResponse = await lists.getAll()
+const collectionsResponse = await collections.getAll()
+
+// Update results
+apiResults.sites = sitesResponse.data || []
+apiResults.lists = listsResponse.data || []
+apiResults.collections = collectionsResponse.data || []
+
+// Log results to console
+apiResults.logs.push('Initial data fetched successfully');
+
+// Example API calls using the new structure
+const exampleCalls = [
+  // Sites
+  {
+    name: 'Get All Sites',
+    type: 'sites',
+    action: 'getAll',
+    description: 'Fetch all sites with their associations'
+  },
+  {
+    name: 'Get Single Site',
+    type: 'sites',
+    action: 'getOne',
+    id: 1,
+    description: 'Fetch a single site by ID'
+  },
+  {
+    name: 'Create Site',
+    type: 'sites',
+    action: 'create',
+    data: {
+      name: 'Test Site',
+      description: 'Created via API test',
+      url: 'https://example.com'
+    },
+    description: 'Create a new site'
+  },
+  // Lists
+  {
+    name: 'Get All Lists',
+    type: 'lists',
+    action: 'getAll',
+    description: 'Fetch all user lists'
+  },
+  {
+    name: 'Get Single List',
+    type: 'lists',
+    action: 'getOne',
+    id: 1,
+    description: 'Fetch a single list by ID'
+  },
+  {
+    name: 'Create List',
+    type: 'lists',
+    action: 'create',
+    data: {
+      name: 'Test List',
+      description: 'Created via API test',
+      public: true
+    },
+    description: 'Create a new user list'
+  },
+  // Collections
+  {
+    name: 'Get All Collections',
+    type: 'collections',
+    action: 'getAll',
+    description: 'Fetch all collections'
+  },
+  {
+    name: 'Get Single Collection',
+    type: 'collections',
+    action: 'getOne',
+    id: 1,
+    description: 'Fetch a single collection by ID'
+  },
+  {
+    name: 'Create Collection',
+    type: 'collections',
+    action: 'create',
+    data: {
+      name: 'Test Collection',
+      description: 'Created via API test'
+    },
+    description: 'Create a new collection'
+  }
+]
+---
+
+<LayoutBase title={title}>
+  <div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold mb-6">API Test Page</h1>
+
+    <AppClient componentName="ApiStatusBar" client:load>
+      <script>
+        const props = {
+          apiResults: {
+            sites: apiResults.sites || [],
+            lists: apiResults.lists || [],
+            collections: apiResults.collections || [],
+            errors: apiResults.errors || []
+          }
+        };
+      </script>
+    </AppClient>
+
+    <AppClient componentName="ApiConsole" client:load>
+      <script>
+        const props = {
+          logs: apiResults.logs || [],
+          errors: apiResults.errors || []
+        };
+      </script>
+    </AppClient>
+
+    <!-- API Test Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {exampleCalls.map((call) => {
+        return (
+          <div class="bg-gray-800 rounded-lg p-6">
+            <h2 class="text-xl font-bold mb-4">{call.name}</h2>
+            
+            <p class="text-gray-400 mb-4">{call.description}</p>
+
+            <AppClient componentName="ApiComponent" client:load>
+              <script>
+                const props = {
+                  type: call.type,
+                  action: call.action,
+                  id: call.id,
+                  data: call.data
+                };
+              </script>
+            </AppClient>
+          </div>
+        );
+      })}
+    </div>
+  </div>
+</LayoutBase>
