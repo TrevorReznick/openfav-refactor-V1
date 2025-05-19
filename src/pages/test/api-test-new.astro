@@ -1,0 +1,11 @@
+---
+import AppClient from '@/react/AppClient'
+import Layout from '@/layouts/Layout.astro'
+import '@/assets/css/ApiTest.css'
+
+const title = 'API Test Page'
+---
+
+<Layout title={title}>
+  <AppClient componentName="ApiTest" client:load />
+</Layout>
